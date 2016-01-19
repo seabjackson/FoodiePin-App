@@ -9,7 +9,7 @@
 import UIKit
 import CoreData
 
-class RestaurantTableViewController: UITableViewController, NSFetchedResultsControllerDelegate {
+class RestaurantTableViewController: UITableViewController, NSFetchedResultsControllerDelegate, UISearchResultsUpdating {
 
     
     @IBAction func unwindToHomeScreen(segue: UIStoryboardSegue) {
@@ -18,6 +18,8 @@ class RestaurantTableViewController: UITableViewController, NSFetchedResultsCont
     
     var restaurants:[Restaurant] = []
     var fetchResultController: NSFetchedResultsController!
+    var searchController: UISearchController!
+    var searchResults: [Restaurant] = []
     
     
 //        Restaurant(name: "Cafe Deadend", type: "Coffee & Tea Shop", location: "G/F, 72 Po Hing Fong, Sheung Wan, Hong Kong", phoneNumber: "232-923423", image: "cafedeadend.jpg", isVisited: false),
@@ -70,6 +72,9 @@ class RestaurantTableViewController: UITableViewController, NSFetchedResultsCont
                 print(error)
             }
         }
+        
+        searchController = UISearchController(searchResultsController: nil)
+        tableView.tableHeaderView = searchController.searchBar
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -91,7 +96,11 @@ class RestaurantTableViewController: UITableViewController, NSFetchedResultsCont
     }
     
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return restaurants.count
+        if searchController.active {
+            return searchResults.count
+        } else {
+            return restaurants.count
+        }
     }
     
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
@@ -197,6 +206,22 @@ class RestaurantTableViewController: UITableViewController, NSFetchedResultsCont
     
     func controllerDidChangeContent(controller: NSFetchedResultsController) {
         tableView.endUpdates()
+    }
+    
+    // filtering search results
+    func filterContentForSearchText(searchText: String) {
+        searchResults = restaurants.filter({ (restaurant: Restaurant) -> Bool in
+        let nameMatch = restaurant.name.rangeOfString(searchText, options: NSStringCompareOptions.CaseInsensitiveSearch)
+            return nameMatch != nil
+        })
+    }
+    
+    // updating search results
+    func updateSearchResultsForSearchController(searchController: UISearchController) {
+        if let searchText = searchController.searchBar.text {
+            filterContentForSearchText(searchText)
+            tableView.reloadData()
+        }
     }
     
     
